@@ -1,4 +1,4 @@
-// DIBUAT OLEH DRAGON STORE (Unofficial ORKUT QRIS Generator)
+// DIBUAT OLEH DRAGON STORE (Unofficial ORKUT QRIS Generator)//
 const swaggerHTML = `
 <!DOCTYPE html>
 <html lang="en">
