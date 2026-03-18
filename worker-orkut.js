@@ -1,4 +1,4 @@
-// DIBUAT OLEH DRAGON STORE (Unofficial ORKUT QRIS Generator)//////
+// DIBUAT OLEH DRAGON STORE (Unofficial QRIS Generator)
 const swaggerHTML = `
 <!DOCTYPE html>
 <html lang="en">
@@ -176,6 +176,7 @@ const swaggerJSON = {
       post: {
         tags: ["Orderkuota (Unofficial)"],
         summary: "Cek Mutasi QRIS",
+        description: "Menampilkan history transaksi QRIS berdasarkan jenis (masuk/keluar)",
         requestBody: {
           required: true,
           content: {
@@ -184,13 +185,22 @@ const swaggerJSON = {
                 type: "object",
                 required: ["username", "token"],
                 properties: {
-                  username: { type: "string", example: "08123456789" },
-                  token: { type: "string", example: "merchant_id:token_string" },
-                  jenis: { type: "string", enum: ["masuk", "keluar"], example: "masuk" },
-                  dari_tanggal: { type: "string", example: "2024-01-01" },
-                  ke_tanggal: { type: "string", example: "2024-12-31" },
-                  signature: { type: "string" },
-                  timestamp: { type: "string" }
+                  username: { 
+                    type: "string", 
+                    description: "Username Orkut",
+                    example: "08123456789" 
+                  },
+                  token: { 
+                    type: "string", 
+                    description: "Token akses (format: merchant_id:token)",
+                    example: "merchant_id:token_string" 
+                  },
+                  jenis: { 
+                    type: "string", 
+                    enum: ["masuk", "keluar"],
+                    description: "Jenis transaksi (opsional, kosongkan untuk semua)",
+                    example: "masuk"
+                  }
                 }
               }
             }
@@ -248,7 +258,6 @@ function calculateCRC16(data) {
     return crc.toString(16).toUpperCase().padStart(4, '0');
 }
 
-
 // DIBUAT OLEH DRAGON STORE (Unofficial QRIS Generator)
 function generateQRString(baseQr, amount) {
     if (!baseQr || baseQr.length < 50) {
@@ -275,7 +284,6 @@ function generateQRString(baseQr, amount) {
     return qrisWithNominal + checksum;
 }
 
-
 function extractQRISInfo(qrisString) {
     let merchant = "Unknown";
     let location = "Unknown";
@@ -293,7 +301,6 @@ function extractQRISInfo(qrisString) {
     return { merchant, location };
 }
 
-
 async function generateQRImage(text) {
     const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(text)}&ecc=H&margin=4`;
     const response = await fetch(qrApiUrl);
@@ -301,13 +308,11 @@ async function generateQRImage(text) {
     return await response.arrayBuffer();
 }
 
-
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
 };
-
 
 const API_BASE = "https://app.orderkuota.com/api/v2";
 const HEADERS_BASE = {
@@ -319,7 +324,6 @@ const APP_PARAMS = {
   app_version_code: "260204",
   app_reg_id: "di309HvATsaiCppl5eDpoc:APA91bFUcTOH8h2XHdPRz2qQ5Bezn-3_TaycFcJ5pNLGWpmaxheQP9Ri0E56wLHz0_b1vcss55jbRQXZgc9loSfBdNa5nZJZVMlk7GS1JDMGyFUVvpcwXbMDg8tjKGZAurCGR4kDMDRJ"
 };
-
 
 // QRIS Generator Unofficial API - DIBUAT OLEH DRAGON STORE
 export default {
@@ -346,7 +350,7 @@ export default {
             });
         }
         
-      
+        // ========== ENDPOINT UTAMA /api/qris ==========
         if (request.method === "GET" && path === "/api/qris") {
             try {
                 const qrisString = url.searchParams.get('qris_string');
@@ -430,7 +434,7 @@ export default {
             }
         }
         
-
+        // ========== ORKUT ENDPOINTS ==========
         if (request.method === "POST") {
             const contentType = request.headers.get("content-type") || "";
             let data = {};
@@ -442,6 +446,7 @@ export default {
                 data = Object.fromEntries(formData.entries());
             }
             
+            // Route ke handler yang sesuai
             if (path === "/api/orkut/login") {
                 return loginOrkut(data.username, data.password);
             }
@@ -460,7 +465,7 @@ export default {
     }
 };
 
-
+// ==================== ORKUT HANDLERS ====================
 async function loginOrkut(username, password) {
     if (!username || !password) {
         return new Response(JSON.stringify({ success: false, message: "username/password wajib diisi" }), {
@@ -484,7 +489,7 @@ async function verifyOtp(username, otp) {
 }
 
 async function getQrisHistory(data) {
-    const { username, token, jenis = "", dari_tanggal = "", ke_tanggal = "", signature = "", timestamp = "" } = data;
+    const { username, token, jenis = "" } = data;
     
     if (!username || !token) {
         return new Response(JSON.stringify({ success: false, message: "username/token wajib diisi" }), {
@@ -501,7 +506,7 @@ async function getQrisHistory(data) {
         });
     }
     
-    const ts = (timestamp && String(timestamp)) || Date.now().toString();
+    const ts = Date.now().toString();
     
     const payload = new URLSearchParams({
         auth_token: token,
@@ -509,8 +514,8 @@ async function getQrisHistory(data) {
         "requests[qris_history][jumlah]": "",
         "requests[qris_history][jenis]": jenis || "",
         "requests[qris_history][page]": "1",
-        "requests[qris_history][dari_tanggal]": dari_tanggal || "",
-        "requests[qris_history][ke_tanggal]": ke_tanggal || "",
+        "requests[qris_history][dari_tanggal]": "",
+        "requests[qris_history][ke_tanggal]": "",
         "requests[qris_history][keterangan]": "",
         "requests[0]": "account",
         request_time: ts,
@@ -519,7 +524,6 @@ async function getQrisHistory(data) {
     
     const headers = new Headers(HEADERS_BASE);
     headers.set("timestamp", ts);
-    if (signature) headers.set("signature", signature);
     
     try {
         const resp = await fetch(`${API_BASE}/qris/mutasi/${merchantId}`, {
