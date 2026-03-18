@@ -74,7 +74,7 @@ curl -X POST "https://shy-pine-6375.103250113.workers.dev/api/orkut/qris-withdra
 
 ## ⚠️ Catatan Penting
 
-- **QRIS Generator:** Nominal akan ditambah random 1-99 (sesuai aturan QRIS)
+- **QRIS Generator:** Nominal akan ditambah random oleh code 1-99
 - **Orderkuota API:** Bersifat **tidak resmi (unofficial)** - gunakan dengan bijak
 - Semua endpoint Orderkuota menggunakan `Content-Type: application/x-www-form-urlencoded`
 - Token didapat dari response `verify-otp` dengan format `merchant_id:token_string`
